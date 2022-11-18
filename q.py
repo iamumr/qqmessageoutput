@@ -51,6 +51,7 @@ class QQoutput():
 
     # 获得聊天记录
     def message(self, num, mode):
+        print(num)
         # mode=1 friend
         # mode=2 troop
         num = str(num).encode('utf-8')
@@ -83,6 +84,7 @@ class QQoutput():
         for path in [os.path.join(self.path, f'slowtable_{str(self.qq)}.db'), os.path.join(self.path, f'{str(self.qq)}.db')]:
             self.c = sqlite3.connect(path).cursor()
             allmsg.append(self.message(num, mode))
+            print('2')
         allmsg = pd.concat(allmsg)
         self.res = allmsg
         if type == 'html':
@@ -101,9 +103,9 @@ class QQoutput():
                 except:
                     pass
         elif type == 'mysql':
-            allmsg.to_sql(str(num), con=mysql, if_exists='replace')
+            allmsg.reset_index().to_sql(str(num), con=mysql, if_exists='replace')
         elif type == 'csv':
-            allmsg.to_csv(str(num) + '.csv')
+            allmsg.to_csv(str(num) + '.csv', encoding="utf_8")
 
     # 获得所有好友昵称，备注，QQ等数据,包括临时会话的人以及一些不知道哪来的人
     def getAllMyFriends(self):
@@ -122,6 +124,7 @@ class QQoutput():
                 print("QQ:{}\t备注:{}\t昵称:{}".format(decode_uin, decode_remark, decode_name), file=f)
                 FriendsData.append([decode_uin, decode_remark, decode_name])
         return FriendsData
+
 
 
 
