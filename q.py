@@ -51,7 +51,6 @@ class QQoutput():
 
     # 获得聊天记录
     def message(self, num, mode):
-        print(num)
         # mode=1 friend
         # mode=2 troop
         num = str(num).encode('utf-8')
@@ -84,7 +83,6 @@ class QQoutput():
         for path in [os.path.join(self.path, f'slowtable_{str(self.qq)}.db'), os.path.join(self.path, f'{str(self.qq)}.db')]:
             self.c = sqlite3.connect(path).cursor()
             allmsg.append(self.message(num, mode))
-            print('2')
         allmsg = pd.concat(allmsg)
         self.res = allmsg
         if type == 'html':
