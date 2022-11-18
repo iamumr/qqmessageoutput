@@ -1,5 +1,8 @@
 # qqmessageoutput
 安卓QQ聊天记录导出/安卓QQ数据库解密
+新增特性：
+1. 清洗掉空白消息
+2. 支持写入mysql数据库和csv文件
 
 # Usage
 

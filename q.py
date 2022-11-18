@@ -1,14 +1,19 @@
+import os
 from _overlapped import NULL
 import hashlib
 import sqlite3
 import time
-
+import pandas as pd
+from sqlalchemy import create_engine
 
 class QQoutput():
     # 初始化解密key，并连接sqlite3数据库
-    def __init__(self, db, key):
+    def __init__(self, path, myqq, key):
+        self.qq = myqq
         self.key = key  # 解密用的密钥
-        self.c = sqlite3.connect(db).cursor()
+        self.path = path
+        self.c = None
+        self.res = None
 
     # 解密数据，针对不同数据用不同的方法
     def fix(self, data, mode):
@@ -46,6 +51,7 @@ class QQoutput():
 
     # 获得聊天记录
     def message(self, num, mode):
+        print(num)
         # mode=1 friend
         # mode=2 troop
         num = str(num).encode('utf-8')
@@ -66,29 +72,40 @@ class QQoutput():
             msg = self.fix(msgdata, 0)
             senderuin = self.fix(uin, 1)
 
-            print([sendtime, senderuin, msg])
-            allmsg.append([sendtime, senderuin, msg])
-        return allmsg
+            if msg != 0:
+                allmsg.append(pd.Series({'datetime': sendtime, 'send': senderuin, 'message': msg}))
+        return pd.concat(allmsg, axis=1).T.set_index('datetime')
 
         # 输出到文件
 
     # 导出聊天记录
-    def output(self, num, mode):
-        file = str(num) + ".html"
-        f2 = open(file, 'w', encoding="utf-8")
-        f2.write("<head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /></head>")
-        allmsg = self.message(num, mode)
-        for msg in allmsg:
-            try:
-                f2.write("<font color=\"blue\">")
-                f2.write(msg[0])
-                f2.write("</font>-----<font color=\"green\">")
-                f2.write(msg[1])
-                f2.write("</font></br>")
-                f2.write(msg[2])
-                f2.write("</br></br>")
-            except:
-                pass
+    def output(self, num, mode, type='html', mysql=None):
+        allmsg = []
+        for path in [os.path.join(self.path, f'slowtable_{str(self.qq)}.db'), os.path.join(self.path, f'{str(self.qq)}.db')]:
+            self.c = sqlite3.connect(path).cursor()
+            allmsg.append(self.message(num, mode))
+            print('2')
+        allmsg = pd.concat(allmsg)
+        self.res = allmsg
+        if type == 'html':
+            file = str(num) + ".html"
+            f2 = open(file, 'w', encoding="utf-8")
+            f2.write("<head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /></head>")
+            for msg in allmsg:
+                try:
+                    f2.write("<font color=\"blue\">")
+                    f2.write(msg[0])
+                    f2.write("</font>-----<font color=\"green\">")
+                    f2.write(msg[1])
+                    f2.write("</font></br>")
+                    f2.write(msg[2])
+                    f2.write("</br></br>")
+                except:
+                    pass
+        elif type == 'mysql':
+            allmsg.to_sql(str(num), con=mysql, if_exists='replace')
+        elif type == 'csv':
+            allmsg.to_csv(str(num) + '.csv')
 
     # 获得所有好友昵称，备注，QQ等数据,包括临时会话的人以及一些不知道哪来的人
     def getAllMyFriends(self):
@@ -109,6 +126,7 @@ class QQoutput():
         return FriendsData
 
 
+
 # config
 # 储存QQ聊天信息的db文件，以你的QQ号命名
 dbfile = 'yourdb.db'
@@ -116,12 +134,16 @@ dbfile = 'yourdb.db'
 key = ''
 # 导出模式，1是好友，2是群
 mode = 1
+# 自己的QQ号
+myqq = 123456
 # 导出的聊天对象
 yourfriendqq = 123456
 
+engine = create_engine('mysql+pymysql://usr:pwd@xx.xx.xx.xx/message')
+
 # 初始化
-q = QQoutput(dbfile, key)
+q = QQoutput(dbfile, myqq, key)
 # 获得所有好友的个人资料
 q.getAllMyFriends()
 # 导出聊天记录
-q.output(yourfriendqq, mode)
+q.output(yourfriendqq, mode, type='mysql', mysql=engine)
