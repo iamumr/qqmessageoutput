@@ -91,7 +91,7 @@ class QQoutput():
             file = str(num) + ".html"
             f2 = open(file, 'w', encoding="utf-8")
             f2.write("<head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /></head>")
-            for msg in allmsg:
+            for msg in allmsg.reset_index().values:
                 try:
                     f2.write("<font color=\"blue\">")
                     f2.write(msg[0])
@@ -124,6 +124,7 @@ class QQoutput():
                 print("QQ:{}\t备注:{}\t昵称:{}".format(decode_uin, decode_remark, decode_name), file=f)
                 FriendsData.append([decode_uin, decode_remark, decode_name])
         return FriendsData
+
 
 
 
